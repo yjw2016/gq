@@ -17,7 +17,7 @@ local.properties
 
 
 ### exe ###
-exe
+*.exe
 
 ### log ###
 *.log
