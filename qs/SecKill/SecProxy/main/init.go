@@ -7,6 +7,7 @@ import (
 	etcd_client "github.com/coreos/etcd/clientv3"
 	"encoding/json"
 	"fmt"
+	"context"
 )
 var (
 	redisPool *redis.Pool
@@ -91,7 +92,44 @@ func initLogger() (err error) {
 	logs.SetLogger(logs.AdapterFile, string(configStr))
 	return
 }
+func loadSecConf() (err error) {
 
+	logs.Debug("secKillConf.EtcdConf.EtcdSecProductKey is :",secKillConf.EtcdConf.EtcdSecProductKey)
+	resp, err := etcdClient.Get(context.Background(), secKillConf.EtcdConf.EtcdSecProductKey)
+	if err != nil {
+		logs.Error("get [%s] from etcd failed, err:%v", secKillConf.EtcdConf.EtcdSecProductKey, err)
+		return
+	}
+
+	var secProductInfo []SecProductInfoConf
+	for k,v := range resp.Kvs{
+		logs.Debug("key[%v] value[%v]",k,v)
+		err = json.Unmarshal(v.Value, &secProductInfo)
+		if err != nil {
+			logs.Error("Unmarsha sec product info failed ,err:%v",err)
+			return
+		}
+
+		logs.Debug("sec info conf is [%v]",secProductInfo)
+
+	}
+
+	secKillConf.SecProductInfoConf = secProductInfo
+	//var secProductInfo []service.SecProductInfoConf
+	//for k, v := range resp.Kvs {
+	//	logs.Debug("key[%v] valud[%v]", k, v)
+	//	err = json.Unmarshal(v.Value, &secProductInfo)
+	//	if err != nil {
+	//		logs.Error("Unmarshal sec product info failed, err:%v", err)
+	//		return
+	//	}
+	//
+	//	logs.Debug("sec info conf is [%v]", secProductInfo)
+	//}
+	//
+	//updateSecProductInfo(secProductInfo)
+	return
+}
 func initSec() (err error) {
 
 	err = initLogger()
@@ -108,6 +146,11 @@ func initSec() (err error) {
 	err = initEtcd()
 	if err != nil {
 		logs.Error("init etcd failed,err:%v",err)
+		return
+	}
+
+	err = loadSecConf()
+	if err != nil {
 		return
 	}
 

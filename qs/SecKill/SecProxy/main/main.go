@@ -6,7 +6,6 @@ _ "gq/qs/SecKill/SecProxy/router"
 )
 
 
-
 func main() {
 	err := initConfig()
 	if err != nil {
